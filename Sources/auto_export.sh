@@ -2,7 +2,9 @@
 
 #localise.biz configuations
 EXPORT_URL=https://localise.biz/api/export/archive/
+ANDROID_OUTPUT_FILENAME="strings.xml"
 EXPORT_FORMAT=
+IOS_FILE_EXT=
 API_KEY=
 
 #default download directory
@@ -25,6 +27,12 @@ NC='\033[0m'
 #CLASS VAR
 total_exported=0
 
+IOS_FILE_EXT_SINGULAR="strings"
+IOS_FILE_EXT_PLURAL="stringsdict"
+
+IOS_EXPORT_FROMAT_SINGULAR="strings.zip"
+IOS_EXPORT_FROMAT_PLURAL="stringsdict.zip"
+
 ####FUNCTIONS####
 
 # $0=exported langCode
@@ -39,18 +47,19 @@ function tryCopyLangFilesiOS {
   fi
 
   cd $UNZIP_PATH; cd *
-  exportedStringsFile=$exportedLang".lproj/Localizable.strings"
+  exportedStringsFile=$exportedLang".lproj/Localizable.${IOS_FILE_EXT}"
   #check if exported lang file exists and OUTPUT_PATH is set
   if [ ! -z $OUTPUT_PATH ]; then
     #then ensure the target lang dir exists and create it otherwise
     targetLangDir=$OUTPUT_PATH"/"$targetLang".lproj"
-    targetLangFile=$targetLangDir"/Localizable.strings"
+    targetLangFile=$targetLangDir"/Localizable.${IOS_FILE_EXT}"
     if [ ! -d $targetLangDir ]; then
       mkdir $targetLangDir
       echo -e "No ${targetLang}.lproj folder, created a new one."
     fi
     cp $exportedStringsFile $targetLangFile
     echo -e "${PINK}${targetLang} updated from localise.biz!\n"
+    let "total_exported++"
   fi
 }
 
@@ -73,7 +82,7 @@ function tryCopyLangFilesAndroid {
   if [ ! -z $OUTPUT_PATH ]; then
     #then ensure the target lang dir exists and create it otherwise
     targetLangDir=$OUTPUT_PATH"/"$targetLang
-    targetLangFile=$targetLangDir"/strings.xml"
+    targetLangFile=$targetLangDir"/$ANDROID_OUTPUT_FILENAME"
     if [ ! -d $targetLangDir ]; then
       mkdir $targetLangDir
       echo -e "No ${targetLang} folder, created a new one."
@@ -99,7 +108,15 @@ PLATFORM=
 case $1 in
   [iI][oO][sS])
     echo -e "${YELLOW}** Going to Export iOS...${NC}"
-    EXPORT_FORMAT="ios.zip"
+    EXPORT_FORMAT=$IOS_EXPORT_FROMAT_SINGULAR
+    IOS_FILE_EXT=$IOS_FILE_EXT_SINGULAR
+    PLATFORM="ios"
+    shift
+    ;;
+  ios_plural)
+    echo -e "${YELLOW}** Going to Export iOS Plurals...${NC}"
+    EXPORT_FORMAT=$IOS_EXPORT_FROMAT_PLURAL
+    IOS_FILE_EXT=$IOS_FILE_EXT_PLURAL
     PLATFORM="ios"
     shift
     ;;
@@ -136,6 +153,10 @@ while getopts ":-:" opt; do
         map)
           val="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
           MAPS+=($val)
+          ;;
+        android_output_file)
+          val="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
+          ANDROID_OUTPUT_FILENAME=$val
           ;;
         *)
           echo -e "${RED}${OPTARG} is not an valid options"
