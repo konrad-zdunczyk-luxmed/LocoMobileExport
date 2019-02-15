@@ -2,7 +2,9 @@
 
 #localise.biz configuations
 EXPORT_URL=https://localise.biz/api/export/archive/
-ANDROID_OUTPUT_FILENAME="strings.xml"
+ANDROID_OUTPUT_FILENAME_WITHOUT_EXT="strings"
+IOS_OUTPUT_FILENAME_WITHOUT_EXT="Localizable"
+
 EXPORT_FORMAT=
 IOS_FILE_EXT=
 API_KEY=
@@ -27,11 +29,20 @@ NC='\033[0m'
 #CLASS VAR
 total_exported=0
 
+ANDROID_FILE_EXT="xml"
 IOS_FILE_EXT_SINGULAR="strings"
 IOS_FILE_EXT_PLURAL="stringsdict"
 
 IOS_EXPORT_FROMAT_SINGULAR="strings.zip"
 IOS_EXPORT_FROMAT_PLURAL="stringsdict.zip"
+
+function androidFileName {
+    echo $ANDROID_OUTPUT_FILENAME_WITHOUT_EXT"."$ANDROID_FILE_EXT
+}
+
+function iosFileName {
+    echo $IOS_OUTPUT_FILENAME_WITHOUT_EXT"."$IOS_FILE_EXT
+}
 
 ####FUNCTIONS####
 
@@ -52,7 +63,7 @@ function tryCopyLangFilesiOS {
   if [ ! -z $OUTPUT_PATH ]; then
     #then ensure the target lang dir exists and create it otherwise
     targetLangDir=$OUTPUT_PATH"/"$targetLang".lproj"
-    targetLangFile=$targetLangDir"/Localizable.${IOS_FILE_EXT}"
+    targetLangFile=$targetLangDir"/$(iosFileName)"
     if [ ! -d $targetLangDir ]; then
       mkdir $targetLangDir
       echo -e "No ${targetLang}.lproj folder, created a new one."
@@ -82,7 +93,7 @@ function tryCopyLangFilesAndroid {
   if [ ! -z $OUTPUT_PATH ]; then
     #then ensure the target lang dir exists and create it otherwise
     targetLangDir=$OUTPUT_PATH"/"$targetLang
-    targetLangFile=$targetLangDir"/$ANDROID_OUTPUT_FILENAME"
+    targetLangFile=$targetLangDir"/$(androidFileName)"
     if [ ! -d $targetLangDir ]; then
       mkdir $targetLangDir
       echo -e "No ${targetLang} folder, created a new one."
@@ -154,9 +165,10 @@ while getopts ":-:" opt; do
           val="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
           MAPS+=($val)
           ;;
-        android_output_file)
+        output_file_name)
           val="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
-          ANDROID_OUTPUT_FILENAME=$val
+          ANDROID_OUTPUT_FILENAME_WITHOUT_EXT=$val
+          IOS_OUTPUT_FILENAME_WITHOUT_EXT=$val
           ;;
         *)
           echo -e "${RED}${OPTARG} is not an valid options"
